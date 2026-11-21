@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Rapa Nui</title>
+<meta name="description" content="Entraînement à la soutenance : les causes du déclin des Rapa Nui.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#1d1650; --bg2:#0b4259;
+  --card:#ffffff; --ink:#1c1b2e; --muted:#5f5e75; --line:#e6e4ef;
+  --c0:#e2483d; --c1:#2f6fe0; --c2:#d99a00; --c3:#1f9a4a;
+  --ok:#1f9d55; --ko:#d63a3a; --mid:#d98a00; --accent:#ff8a3d; --soft:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Fredoka',system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg1);background-image:linear-gradient(160deg,var(--bg1) 0%,var(--bg2) 100%);background-attachment:fixed;color:#fff;min-height:100vh;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:920px;margin:0 auto;padding:20px 16px 40px;min-height:100vh;display:flex;flex-direction:column}
+.screen{display:none;flex:1;flex-direction:column;gap:18px}
+.screen.active{display:flex}
+h1{font-size:clamp(2.1rem,7vw,3.4rem);margin:0;line-height:1.05;font-weight:700}
+h2{font-size:1.5rem;margin:0 0 6px;font-weight:600}
+p{margin:0}
+.sub{opacity:.85;font-size:1.1rem;line-height:1.4}
+
+.hero{text-align:center;padding:18px 0 4px}
+.hero .moai{font-size:3.6rem;line-height:1}
+.panel{background:var(--soft);border-radius:18px;padding:18px}
+.label{font-size:.95rem;text-transform:uppercase;letter-spacing:.06em;opacity:.8;margin-bottom:10px;font-weight:600}
+.levels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lvl{background:var(--card);color:var(--ink);border:4px solid transparent;border-radius:18px;padding:16px;text-align:left;transition:transform .12s,border-color .12s}
+.lvl:hover{transform:translateY(-2px)}
+.lvl.sel{border-color:var(--accent)}
+.lvl .t{font-size:1.4rem;font-weight:700}
+.lvl .d{color:var(--muted);margin:4px 0 12px;line-height:1.35}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--ok);border-radius:6px;transition:width .4s}
+.mast{font-size:.9rem;color:var(--muted);margin-top:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg button{background:rgba(255,255,255,.08);color:#fff;border:3px solid rgba(255,255,255,.25);border-radius:14px;padding:12px;font-size:1.05rem;font-weight:500;line-height:1.3}
+.seg button.sel{border-color:var(--accent);background:rgba(255,138,61,.18)}
+.seg small{display:block;opacity:.8;font-weight:400}
+.big{background:var(--accent);color:#fff;border:0;border-radius:16px;padding:16px 22px;font-size:1.4rem;font-weight:700;box-shadow:0 5px 0 #c5612a;transition:transform .08s}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 #c5612a}
+.big:disabled{opacity:.5;cursor:default}
+.ghost{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.45);border-radius:14px;padding:12px 18px;font-size:1.05rem;font-weight:500}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;font-size:1.05rem}
+.pill{background:var(--soft);border-radius:999px;padding:6px 14px;white-space:nowrap}
+.quit{background:transparent;border:0;color:#fff;opacity:.7;font-size:1rem;padding:6px}
+.qcard{background:var(--card);color:var(--ink);border-radius:18px;padding:22px 20px;text-align:center;font-size:clamp(1.25rem,3.6vw,1.7rem);font-weight:600;line-height:1.3;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.qcard .tag{font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.speak{background:#f1effa;color:var(--ink);border:0;border-radius:999px;padding:6px 14px;font-size:.95rem;font-weight:500}
+.timerline{height:12px;background:var(--soft);border-radius:8px;overflow:hidden}
+.timerline>i{display:block;height:100%;width:100%;background:var(--accent);border-radius:8px}
+.timerline.low>i{background:var(--ko)}
+.timenum{text-align:center;font-size:1.05rem;opacity:.9;min-height:1.3em}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ans{display:flex;align-items:center;gap:12px;border:0;border-radius:14px;padding:16px 14px;min-height:78px;color:#fff;font-size:clamp(1rem,2.5vw,1.15rem);font-weight:600;text-align:left;line-height:1.25;box-shadow:0 5px 0 rgba(0,0,0,.25);transition:transform .08s,opacity .2s,filter .2s}
+.ans:active{transform:translateY(3px)}
+.ans svg{flex:0 0 30px;width:30px;height:30px}
+.ans.c0{background:var(--c0)} .ans.c1{background:var(--c1)} .ans.c2{background:var(--c2)} .ans.c3{background:var(--c3)}
+.answers.done .ans{cursor:default;opacity:.35;filter:grayscale(.6)}
+.answers.done .ans.right{opacity:1;filter:none;outline:5px solid #fff;outline-offset:-5px}
+.answers.done .ans.wrong{opacity:.9;filter:none}
+.ans .mark{margin-left:auto;font-size:1.5rem}
+
+/* Oral */
+.oral{display:flex;flex-direction:column;gap:12px}
+.mic{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--c1);color:#fff;border:0;border-radius:16px;padding:16px;font-size:1.3rem;font-weight:700;box-shadow:0 5px 0 rgba(0,0,0,.25)}
+.mic.on{background:var(--ko);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(214,58,58,.6)}50%{box-shadow:0 0 0 12px rgba(214,58,58,0)}}
+textarea{width:100%;min-height:150px;border:0;border-radius:14px;padding:14px;font-family:inherit;font-size:1.1rem;line-height:1.45;color:var(--ink);background:var(--card);resize:vertical}
+textarea:focus{outline:4px solid var(--accent)}
+.hint{font-size:.95rem;opacity:.85;line-height:1.4}
+.warn{background:rgba(255,216,77,.18);border:2px solid rgba(255,216,77,.6);border-radius:12px;padding:10px 12px;font-size:.98rem;line-height:1.4}
+
+.fb{border-radius:18px;padding:18px 20px;color:#fff;animation:pop .25s ease-out}
+.fb.ok{background:var(--ok)} .fb.ko{background:var(--ko)} .fb.mid{background:var(--mid)}
+.fb .h{font-size:1.6rem;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fb .pts{font-size:1.1rem;font-weight:600;background:rgba(255,255,255,.2);border-radius:999px;padding:2px 12px}
+.fb .good{margin-top:6px;font-size:1.1rem;font-weight:600}
+.fb .ex{margin-top:10px;background:rgba(0,0,0,.15);border-radius:12px;padding:12px 14px;font-size:1.08rem;line-height:1.45;font-weight:400}
+.fb .ex b{font-weight:600}
+.fb .next{margin-top:14px;width:100%;background:#fff;color:var(--ink);border:0;border-radius:14px;padding:14px;font-size:1.2rem;font-weight:700}
+.ideas{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.idea{display:flex;align-items:flex-start;gap:10px;text-align:left;background:rgba(255,255,255,.95);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;font-size:1.02rem;line-height:1.35}
+.idea .ic{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--line);color:var(--muted)}
+.idea.got .ic{background:var(--ok);color:#fff}
+.idea small{display:block;color:var(--muted);font-size:.85rem}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+
+.score{background:var(--card);color:var(--ink);border-radius:18px;padding:22px;text-align:center}
+.score .big-n{font-size:3.4rem;font-weight:700;line-height:1}
+.score .msg{font-size:1.25rem;margin-top:8px;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.stat{background:#f4f3f9;border-radius:12px;padding:10px}
+.stat b{display:block;font-size:1.5rem}
+.stat span{font-size:.9rem;color:var(--muted)}
+.review{display:flex;flex-direction:column;gap:10px}
+.rv{background:var(--card);color:var(--ink);border-radius:14px;padding:14px 16px;border-left:8px solid var(--ok)}
+.rv.ko{border-left-color:var(--ko)} .rv.mid{border-left-color:var(--mid)}
+.rv .q{font-weight:600;line-height:1.3}
+.rv .a{margin-top:6px;line-height:1.4}
+.rv .e{margin-top:6px;color:var(--muted);line-height:1.45}
+.rv .said{margin-top:6px;background:#f4f3f9;border-radius:10px;padding:8px 10px;font-style:italic;line-height:1.4}
+
+table{width:100%;border-collapse:collapse;background:var(--card);color:var(--ink);border-radius:14px;overflow:hidden;font-size:1rem}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line)}
+th{background:#f4f3f9;font-weight:600;font-size:.9rem}
+tr:last-child td{border-bottom:0}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sumc{background:var(--card);color:var(--ink);border-radius:16px;padding:16px}
+.sumc h3{margin:0 0 8px;font-size:1.3rem}
+.sumc .l{display:flex;justify-content:space-between;padding:3px 0;color:var(--muted)}
+.sumc .l b{color:var(--ink)}
+.spark{display:flex;align-items:flex-end;gap:4px;height:54px;margin-top:10px}
+.spark i{flex:1;background:var(--c1);border-radius:3px 3px 0 0;min-height:3px;max-width:40px}
+.badge{display:inline-block;background:#ffd84d;color:#5a3d00;border-radius:999px;padding:3px 12px;font-weight:700;font-size:.95rem;margin-top:8px}
+.empty{background:var(--soft);border-radius:14px;padding:20px;text-align:center}
+.howto li{margin:6px 0;line-height:1.4}
+.foot{text-align:center;opacity:.6;font-size:.9rem;margin-top:24px}
+
+.modal{position:fixed;inset:0;background:rgba(10,8,30,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal[hidden]{display:none}
+.modal .box{background:var(--card);color:var(--ink);border-radius:18px;padding:22px;max-width:420px;width:100%;text-align:center;animation:pop .2s ease-out}
+.modal .box p{font-size:1.15rem;line-height:1.4;margin-bottom:18px}
+.modal .box .row button{flex:1;min-width:120px}
+.modal .cancel{background:#f1effa;color:var(--ink);border:0;border-radius:14px;padding:12px 18px;font-size:1.05rem;font-weight:600}
+.modal .okb{background:var(--ko);color:#fff;border:0;border-radius:14px;padding:12px 18px;font-size:1.05rem;font-weight:600}
+
+@media (max-width:620px){
+  .levels,.sum{grid-template-columns:1fr}
+  .answers{grid-template-columns:1fr;gap:10px}
+  .ans{min-height:64px}
+  .stats{gap:6px}
+  th:nth-child(3),td:nth-child(3){display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ACCUEIL -->
+<section id="home" class="screen active">
+  <div class="hero">
+    <div class="moai" aria-hidden="true">🗿</div>
+    <h1>Quiz Rapa Nui</h1>
+    <p class="sub">Prépare ta soutenance : maîtrise ta réflexion sur le déclin des Rapa Nui.</p>
+  </div>
+
+  <div class="panel">
+    <div class="label">1. Choisis ton niveau</div>
+    <div class="levels" id="levels"></div>
+  </div>
+
+  <div class="panel">
+    <div class="label">2. Avec ou sans chrono ?</div>
+    <div class="seg" id="chronoSeg">
+      <button data-v="1">⏱️ Avec chrono<small>Comme le jour J : réponds sans trop hésiter</small></button>
+      <button data-v="0">🧘 Sans chrono<small>Prends ton temps pour réfléchir</small></button>
+    </div>
+  </div>
+
+  <button class="big" id="startBtn">C’est parti !</button>
+  <div class="row">
+    <button class="ghost" id="histBtn">📊 Mes résultats</button>
+    <button class="ghost" id="howBtn">❓ Comment jouer</button>
+  </div>
+  <div class="panel howto" id="howto" hidden>
+    <ul style="margin:0;padding-left:20px">
+      <li><b>🌱 Facile – Comprendre la réflexion</b> : questions à choix sur la problématique, les hypothèses, les arguments pour et contre, l’avis des spécialistes et la conclusion.</li>
+      <li><b>🔥 Difficile – Questions du jury</b> : les questions qu’un jury peut poser à la soutenance. Tu réponds <b>à voix haute</b> (le texte s’écrit tout seul) ou en tapant.</li>
+      <li>Après ta réponse orale, on te montre les <b>idées clés</b> que tu as citées ✔ et celles qui manquent, puis une <b>réponse modèle</b>. Si tu as dit une idée avec d’autres mots, touche-la pour la cocher.</li>
+      <li>Les questions pas encore maîtrisées reviennent <b>en priorité</b>.</li>
+      <li>Avec chrono : 25 s par question à choix, 2 minutes par question du jury.</li>
+      <li>Le micro marche dans Chrome, Edge et Safari. La première fois, le navigateur demande l’autorisation d’utiliser le micro : accepte.</li>
+    </ul>
+  </div>
+  <p class="foot">D’après le travail de maturité « Réflexion historique : les causes du déclin des Rapa Nui » (2026).</p>
+</section>
+
+<!-- JEU -->
+<section id="game" class="screen">
+  <div class="topbar">
+    <button class="quit" id="quitBtn" aria-label="Quitter la partie">✕ Quitter</button>
+    <span class="pill" id="qNum">1 / 15</span>
+    <span class="pill" id="scoreTop">0 pt</span>
+  </div>
+  <div class="qcard" id="qCard"></div>
+  <div id="timerBox">
+    <div class="timerline" id="timerLine"><i id="timerFill"></i></div>
+    <div class="timenum" id="timeNum"></div>
+  </div>
+  <div id="answerZone"></div>
+  <div id="feedback"></div>
+</section>
+
+<!-- RÉSULTATS DE LA PARTIE -->
+<section id="result" class="screen">
+  <div class="score" id="scoreCard"></div>
+  <div class="row">
+    <button class="big" id="againBtn">Rejouer</button>
+    <button class="ghost" id="errBtn">🔁 Retravailler mes points faibles</button>
+    <button class="ghost" id="homeBtn">🏠 Accueil</button>
+  </div>
+  <h2>Revois tes réponses</h2>
+  <div class="review" id="review"></div>
+</section>
+
+<!-- HISTORIQUE -->
+<section id="history" class="screen">
+  <div class="topbar">
+    <button class="quit" id="histBack">← Retour</button>
+    <span></span>
+  </div>
+  <h1 style="font-size:2rem">📊 Mes résultats</h1>
+  <div class="sum" id="sum"></div>
+  <h2>Toutes mes parties</h2>
+  <div id="histTable"></div>
+  <div class="row"><button class="ghost" id="resetBtn">Effacer tous mes résultats</button></div>
+</section>
+
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="box" role="dialog" aria-modal="true">
+    <p id="modalMsg"></p>
+    <div class="row">
+      <button class="cancel" id="modalNo">Non, continuer</button>
+      <button class="okb" id="modalYes">Oui</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   NIVEAU FACILE : comprendre la réflexion (QCM)
+   c = index de la bonne réponse, e = explication
+   ========================================================= */
+const QCM = [
+ {q:"Quelle est la problématique centrale du travail ?", a:["Comment les moaï ont-ils été déplacés ?","Le déclin vient-il surtout de facteurs internes (choix des Rapa Nui) ou externes (arrivée des Européens) ?","Pourquoi l’île s’appelle-t-elle Île de Pâques ?","Le Rongo-Rongo peut-il être déchiffré ?"], c:1,
+  e:"La problématique : le déclin résulte-t-il surtout de <b>facteurs internes</b> (choix et pratiques de la société) ou de <b>facteurs externes</b> (notamment l’arrivée des Européens) ? Tout le travail est construit pour y répondre."},
+ {q:"Quelle était l’hypothèse personnelle de l’auteure dès le début ?", a:["La déforestation explique tout","Les Européens expliquent tout","Aucune explication seule ne suffit : c’est une accumulation de facteurs qui se renforcent","Les Rapa Nui ont émigré en Amérique"], c:2,
+  e:"Dès l’introduction, elle pense qu’<b>aucune explication ne suffit à elle seule</b> : le déclin vient plutôt d’une <b>accumulation de facteurs</b> défavorables qui se sont renforcés mutuellement."},
+ {q:"Selon l’hypothèse de l’écocide, dans quel ordre les choses se seraient-elles passées ?", a:["Famine → déforestation → hausse de la population → effondrement","Hausse de la population → déforestation → épuisement des ressources → famine et conflits → effondrement","Arrivée des Européens → maladies → déforestation","Changement climatique → éruption volcanique → famine"], c:1,
+  e:"La chaîne de l’écocide : <b>hausse de la population → déforestation → épuisement des ressources → famine et conflits → effondrement</b> démographique (au XVIIIe siècle)."},
+ {q:"Qu’est-ce qu’un écocide ?", a:["Une guerre entre clans","La destruction massive de l’environnement qui compromet la survie d’une population","Une maladie apportée par les Européens","Une cérémonie religieuse"], c:1,
+  e:"Un <b>écocide</b> est la destruction massive de l’environnement (forêts, sols, eau…) au point de compromettre la survie d’une population."},
+ {q:"Quel auteur célèbre défend la thèse de l’écocide ?", a:["Terry Hunt","Diego Muñoz","Jared Diamond (livre « Effondrement »)","Sergio Rapu Haoa"], c:2,
+  e:"<b>Jared Diamond</b>, dans « Effondrement ». C’est l’auteur à citer pour montrer que la thèse de l’écocide a de vrais défenseurs."},
+ {q:"Selon l’écocide, pourquoi de nombreux moaï auraient-ils été renversés ?", a:["À cause de tremblements de terre","Parce que la population aurait perdu confiance dans ses chefs et ses croyances, et que des conflits internes auraient éclaté","Parce que les Européens les ont abattus","Pour les déplacer plus facilement"], c:1,
+  e:"Les chefs auraient exigé toujours plus de travail pour des moaï plus grands. Face aux difficultés, la population aurait <b>perdu confiance</b> dans ses dirigeants et ses croyances : <b>conflits internes</b>, moaï renversés, ahu détruits."},
+ {q:"Lequel de ces éléments est un argument CONTRE l’écocide ?", a:["L’île était autrefois couverte de forêts de palmiers","À l’arrivée des Européens, il restait encore des arbres et des cultures (bananiers, cocotiers, ignames)","Les moaï demandaient beaucoup de bois","La population a beaucoup augmenté"], c:1,
+  e:"Si les Européens trouvent encore <b>des arbres et des cultures</b>, l’île n’était pas totalement dévastée : les Rapa Nui parvenaient encore à vivre. Les autres réponses vont plutôt <b>dans le sens</b> de l’écocide."},
+ {q:"Pourquoi le témoignage de Rollin (expédition La Pérouse, 1786) est-il important ?", a:["Il prouve qu’il y avait une guerre","Il décrit une population nombreuse, en bonne santé, et un sol qui nourrit bien les habitants","Il raconte la construction des moaï","Il décrit l’arrivée de Roggeveen"], c:1,
+  e:"Rollin s’attendait à des gens « épuisés par la famine » et trouve au contraire <b>une population considérable</b> et <b>des provisions en abondance</b>. C’est un témoin direct qui contredit l’image d’une île ravagée."},
+ {q:"Que montre l’étude ADN (15 individus anciens) sur la population ?", a:["Un effondrement massif au XVIIe siècle","Pas de grand effondrement au XVIIe siècle : la population augmente jusqu’aux bouleversements du XIXe siècle","Que les Rapa Nui venaient d’Europe","Que l’île était vide avant 1722"], c:1,
+  e:"Pas de « <b>goulot d’étranglement</b> » démographique au XVIIe siècle : la population, plutôt petite, a augmenté progressivement <b>jusqu’aux bouleversements du XIXe siècle</b>."},
+ {q:"Vrai ou faux : l’étude ADN prouve que les Rapa Nui n’ont jamais abîmé leur environnement.", a:["Vrai","Faux"], c:1, tf:true,
+  e:"<b>Faux</b>, et c’est une nuance importante pour la soutenance. L’ADN étudie l’<b>histoire de la population</b>, pas l’impact écologique. L’étude réfute un grand effondrement dû à l’écocide, mais <b>pas l’existence de transformations de l’environnement</b>."},
+ {q:"Quelle est l’idée de Terry Hunt sur la disparition de la forêt ?", a:["Les habitants ont tout coupé pour les moaï","Les rats arrivés avec les Polynésiens ont mangé les graines, et la forêt n’a plus pu se régénérer","Un volcan a brûlé la forêt","Les Européens ont coupé les arbres"], c:1,
+  e:"Pour Hunt, les <b>rats</b> introduits par les bateaux polynésiens ont mangé les graines des palmiers. Conséquence pour la réflexion : les Rapa Nui <b>ne sont pas seuls responsables</b> de la disparition de la forêt."},
+ {q:"Que pense Diego Muñoz de la théorie des rats ?", a:["Il est totalement d’accord","Il n’y croit pas : les rats ont peut-être détruit quelques arbres, mais certainement pas tous","Il pense que les rats ont apporté des maladies","Il ne s’est pas prononcé"], c:1,
+  e:"Muñoz <b>ne croit pas</b> à la théorie des rats : ils ont peut-être fait perdre <b>quelques arbres, pas tous</b>. C’est le principal désaccord entre les deux spécialistes."},
+ {q:"Selon Terry Hunt, la déforestation a-t-elle été une catastrophe ?", a:["Oui, elle a provoqué la famine","Non : elle a eu lieu, mais en défrichant pour cultiver, les habitants ont même augmenté la capacité productive de l’île","Elle n’a jamais eu lieu","Oui, elle a causé la guerre civile"], c:1,
+  e:"Pour Hunt, la déforestation <b>a bien eu lieu</b>, mais <b>n’était pas forcément un problème</b> : tout dépend du point de vue (zone protégée ou terre agricole). En défrichant par le feu, ils ont <b>augmenté la capacité productive</b>."},
+ {q:"Selon Diego Muñoz, pourquoi l’écocide a-t-il eu autant de succès ?", a:["Parce qu’il est prouvé par l’ADN","Parce que c’est une histoire « vendeuse » qui fonctionne bien comme récit, mais qui n’est pas prouvée","Parce que les Rapa Nui le racontent eux-mêmes","Parce que Roggeveen l’a écrit"], c:1,
+  e:"Pour Muñoz, l’écocide « fonctionne bien pour les récits » : c’est une histoire <b>« vendeuse »</b>, en partie inventée, mais <b>pas prouvée</b>. Selon lui, les anciens ne sont pas responsables du déclin."},
+ {q:"Quels sont les 3 facteurs du déclin selon Diego Muñoz ?", a:["Déforestation, rats, guerres","Esclavage, maladies, évangélisation","Climat, famine, volcans","Rats, maladies, climat"], c:1,
+  e:"<b>L’esclavage, les maladies et l’évangélisation</b>. Pour lui, il n’y a pas eu d’écocide."},
+ {q:"Quelle est la position de Terry Hunt sur la cause du déclin de la population ?", a:["Les Rapa Nui sont responsables","Ce sont les maladies apportées par les Européens ; les Rapa Nui n’ont cessé de s’adapter","C’est le climat","C’est la guerre entre clans"], c:1,
+  e:"Pour Hunt, c’est très clair : <b>les maladies européennes</b> ont décimé la population. Les Pascuans <b>ne sont en rien responsables</b> et n’ont cessé de <b>s’adapter</b>."},
+ {q:"Sur quel point Muñoz et Hunt sont-ils d’accord ?", a:["Le rôle des rats","Le rôle très important des maladies","Le rôle du climat","L’écocide"], c:1,
+  e:"Ils sont d’accord sur le rôle <b>très important des maladies</b>. Ils ne sont <b>pas d’accord sur les rats</b>."},
+ {q:"Quelle limite l’auteure reconnaît-elle à propos de ses deux entretiens ?", a:["Ils étaient trop courts","Les deux spécialistes défendent la même cause (les maladies), alors que d’autres comme Jared Diamond défendent l’écocide","Ils étaient en anglais","Ils ne connaissaient pas l’île"], c:1,
+  e:"Elle « mesure » ces informations : ses deux spécialistes sont <b>tous deux défenseurs de la cause « maladies »</b>, alors que d’autres (Jared Diamond) défendent l’écocide. Le jury peut l’interroger là-dessus : c’est bien de l’avoir dit."},
+ {q:"Selon l’étude de 2020 sur le climat, quel a été l’effet du changement climatique ?", a:["Il a détruit directement la société","Il a réduit l’eau et la production agricole, donc la nourriture par habitant et la croissance de la population","Il a provoqué des éruptions","Aucun effet"], c:1,
+  e:"Le climat <b>n’a pas détruit directement</b> la société : il a modifié <b>l’eau disponible et la production agricole</b>, donc moins de nourriture par habitant et une croissance plus lente."},
+ {q:"Dans l’exemple du travail, 1 000 unités de nourriture pour 2 000 habitants, cela donne combien par habitant ?", a:["2 unités","1 unité","0,5 unité","0,2 unité"], c:2,
+  e:"<b>0,5 unité</b>. L’idée : si l’île ne peut pas produire plus, quand la population augmente, <b>la nourriture par habitant diminue</b>."},
+ {q:"Selon l’étude de 2020, quelles sont les 3 périodes de déclin ?", a:["1200–1300, 1722, 1888","1450–1550 (Petit Âge glaciaire), 1722–1774 (causes incertaines), XIXe siècle (maladies et esclavage)","IXe siècle, XIIe siècle, XVIe siècle","1862, 1863, 1871"], c:1,
+  e:"<b>1450–1550</b> (Petit Âge glaciaire, environ 200 ans avant les Européens), <b>1722–1774</b> (causes incertaines) et le <b>XIXe siècle</b> (maladies et esclavage). D’où l’idée de considérer <b>plusieurs périodes et plusieurs facteurs</b>."},
+ {q:"Lequel de ces facteurs est un facteur EXTERNE ?", a:["La déforestation par les habitants","Les conflits entre clans","Les raids esclavagistes péruviens","La construction de moaï toujours plus grands"], c:2,
+  e:"Les <b>raids esclavagistes péruviens</b> (1862–1863) viennent de l’extérieur. Les trois autres sont des facteurs <b>internes</b>, liés aux choix de la société."},
+ {q:"Pourquoi l’enlèvement des chefs et des prêtres a-t-il été si grave ?", a:["Ils étaient les seuls à pêcher","Cela a affaibli les structures politiques et religieuses traditionnelles","Ils construisaient les maisons","Ils étaient les seuls à parler espagnol"], c:1,
+  e:"Avec les chefs et les prêtres, c’est <b>l’organisation politique et religieuse</b> de la société qui a été affaiblie, pas seulement le nombre d’habitants."},
+ {q:"Selon Muñoz, comment s’est déroulé le déclin au XIXe siècle ?", a:["Famine, puis guerre, puis départ","Un tiers enlevé comme esclaves → les survivants revenus apportent la variole → les missionnaires partent avec la moitié de ceux qui restent","Arrivée de Roggeveen, puis annexion","Éruption, puis exode"], c:1,
+  e:"1) <b>Un tiers</b> de la population enlevé et vendu au Pérou. 2) La douzaine de survivants revenus apporte la <b>variole</b>. 3) Les missionnaires partent avec <b>la moitié</b> de la population restante. En <b>1871</b>, il ne reste qu’<b>une centaine</b> de personnes."},
+ {q:"Quelle contradiction l’auteure relève-t-elle entre l’étude ADN et Diego Muñoz ?", a:["Sur la date d’arrivée de Roggeveen","L’ADN montre un contact avec des Amérindiens vers 1250–1430, alors que Muñoz affirme que l’île était complètement isolée de 1200–1300 à 1722","Sur le nombre de moaï","Sur la langue parlée"], c:1,
+  e:"L’ADN date le mélange avec des Amérindiens vers <b>1250–1430</b>, alors que Muñoz parle d’un <b>isolement complet</b> jusqu’en 1722. Montrer qu’on a <b>confronté ses sources</b> est un point fort à l’oral."},
+ {q:"En quoi le contact avec les Amérindiens nuance-t-il l’hypothèse de l’écocide ?", a:["Il prouve que les Amérindiens ont coupé les arbres","Il montre que l’île n’était pas totalement isolée et que les Rapa Nui avaient une capacité d’adaptation (et de navigation) plus grande qu’on le pensait","Il prouve que les Européens sont arrivés plus tôt","Il n’a aucun lien"], c:1,
+  e:"Si une île déboisée ne pouvait plus construire de bateaux, ces voyages semblaient impossibles. Le contact montre une société <b>pas totalement isolée</b> et <b>plus capable de s’adapter</b> que l’image d’une société qui s’autodétruit."},
+ {q:"Quelle prudence faut-il avoir avec le contact amérindien ?", a:["L’ADN est sûrement faux","On sait qu’il y a eu contact, mais pas qui a voyagé vers qui, combien de fois, ni par quelles routes","On sait exactement quel bateau a été utilisé","Il n’y a aucune prudence à avoir"], c:1,
+  e:"L’ADN <b>prouve un contact</b>, mais on ignore <b>qui a voyagé vers qui</b>, <b>combien de voyages</b> et <b>quelles routes</b>. Distinguer ce qui est prouvé de ce qui ne l’est pas, c’est exactement ce que le jury attend."},
+ {q:"Que montrent les fers de lance vus au musée de Leiden pour la réflexion ?", a:["Qu’il y a eu une grande guerre de la faim","On les croyait liés à une guerre causée par la famine, mais ils servaient à l’agriculture ou aux rituels : cela affaiblit le récit de l’écocide","Qu’ils venaient d’Europe","Qu’ils servaient à tailler les moaï"], c:1,
+  e:"On les a d’abord vus comme des armes d’une <b>guerre de la faim</b> (un pilier du récit de l’écocide). Les recherches ont prouvé qu’ils servaient à <b>l’agriculture ou aux rituels</b>."},
+ {q:"Quelle est la conclusion de l’auteure ?", a:["Les Rapa Nui sont seuls responsables","Les facteurs extérieurs ont joué un rôle déterminant dans la catastrophe démographique, même si certaines étapes plus anciennes restent discutées","Le climat explique tout","On ne peut rien conclure"], c:1,
+  e:"Elle conclut que <b>les facteurs extérieurs</b> (maladies, esclavage, bouleversements) <b>ont joué un rôle déterminant</b>, tout en restant nuancée : plusieurs facteurs, plusieurs périodes, et certaines étapes <b>restent discutées</b>."},
+ {q:"Quelle distinction importante l’auteure fait-elle dans sa conclusion ?", a:["Entre les moaï et les ahu","Entre les transformations de l’environnement et la diminution de la population","Entre le Chili et le Pérou","Entre les hommes et les femmes"], c:1,
+  e:"Il faut distinguer <b>les transformations de l’environnement</b> (la forêt a bien diminué) et <b>la diminution de la population</b> (qui s’explique surtout par d’autres causes). C’est la clé de toute la réflexion."},
+ {q:"Qu’est-ce que ce travail a appris à l’auteure sur la méthode ?", a:["À croire la théorie la plus connue","À se méfier des explications trop simples et à distinguer faits établis, hypothèses et interprétations","À ne lire que des livres","À éviter les spécialistes"], c:1,
+  e:"Se <b>méfier des explications trop simples</b> et des récits qui accusent une population d’être seule responsable, et <b>distinguer faits établis, hypothèses et interprétations</b>."},
+ {q:"Quelle question ouverte l’auteure pose-t-elle à la fin ?", a:["Comment déplacer un moaï ?","Comment les peuples peuvent-ils s’adapter aux changements tout en préservant leurs traditions, leur langue et leur vision du monde ?","Faut-il rendre l’île au Pérou ?","Faut-il reconstruire la forêt ?"], c:1,
+  e:"« Comment les peuples peuvent-ils <b>s’adapter aux changements</b> tout en <b>préservant leurs traditions, leur langue et leur vision du monde</b> ? » Elle relie ainsi l’histoire des Rapa Nui au monde d’aujourd’hui."},
+ {q:"Vrai ou faux : le peuple Rapa Nui a complètement disparu.", a:["Vrai","Faux"], c:1, tf:true,
+  e:"<b>Faux.</b> Il y a aujourd’hui <b>environ 6 000 Rapa Nui</b> (dont 2 000 sur le continent chilien), fiers de leur culture. Le travail parle d’un <b>déclin</b>, pas d’une disparition : une population peut subir de grands bouleversements <b>sans perdre son identité</b>."},
+ {q:"Pourquoi la forêt de palmiers est-elle centrale dans le débat ?", a:["Parce qu’on y a trouvé les moaï","Parce que les pollens fossiles prouvent qu’elle existait, et la question est de savoir pourquoi elle a disparu et si cela a causé le déclin","Parce qu’elle existe encore aujourd’hui","Parce que les Européens l’ont plantée"], c:1,
+  e:"Les <b>pollens fossiles</b> et les noix de palmiers (John Flenley) prouvent qu’une forêt existait. Le débat porte sur <b>qui ou quoi l’a fait disparaître</b> (humains, rats, climat) et <b>si cela a vraiment causé le déclin</b> de la population."}
+];
+
+/* =========================================================
+   NIVEAU DIFFICILE : questions du jury (réponse orale)
+   ideas = idées clés attendues (k = mots qui la détectent)
+   e = réponse modèle
+   ========================================================= */
+const ORAL = [
+ {q:"Présentez votre problématique et expliquez pourquoi ce sujet est intéressant.",
+  ideas:[
+   {t:"Facteurs internes ou externes", k:["interne","externe","exterieur"]},
+   {t:"L’arrivée des Européens", k:["europe","colon"]},
+   {t:"Un débat entre chercheurs, sans consensus", k:["debat","chercheur","hypothese","consensus","discute"]},
+   {t:"Le lien entre une société et son environnement", k:["environnement","ressource","nature","ecolog"]}],
+  e:"Ma problématique est : le déclin des Rapa Nui résulte-t-il principalement de <b>facteurs internes</b>, liés aux choix de cette société, ou de <b>facteurs externes</b>, notamment l’<b>arrivée des Européens</b> ? C’est un sujet encore <b>débattu</b> entre chercheurs, et il permet de réfléchir au <b>lien entre une société et son environnement</b>, une question toujours actuelle."},
+ {q:"Expliquez l’hypothèse de l’écocide. Qui la défend ?",
+  ideas:[
+   {t:"La déforestation / disparition des palmiers", k:["deforest","arbre","foret","palmier","bois"]},
+   {t:"L’épuisement des ressources", k:["ressource","epuis","sol ","sols","erosion"]},
+   {t:"Famine et conflits", k:["famine","faim","conflit","guerre"]},
+   {t:"Un effondrement de la population", k:["effondr","declin","demograph","population"]},
+   {t:"Défendue par Jared Diamond", k:["diamond","effondrement"]}],
+  e:"Selon l’écocide, la <b>population a augmenté</b> et les habitants ont <b>abattu les forêts de palmiers</b> (construction, transport des moaï, combustible). Les <b>ressources se sont épuisées</b>, ce qui a causé <b>famine et conflits</b>, puis un <b>effondrement démographique</b>. Cette thèse est notamment défendue par <b>Jared Diamond</b> dans « Effondrement »."},
+ {q:"Donnez au moins trois arguments qui remettent en question l’écocide.",
+  ideas:[
+   {t:"À l’arrivée des Européens, il restait des arbres et des cultures", k:["restait","encore des arbres","bananier","cocotier","igname","il y avait encore"]},
+   {t:"Rollin (1786) décrit une population nombreuse et bien nourrie", k:["rollin","perouse","1786","bonne sante","abondance"]},
+   {t:"L’ADN ne montre pas d’effondrement au XVIIe siècle", k:["adn","genet","genome","goulot"]},
+   {t:"Les rats ont aussi détruit la forêt", k:["rat"]},
+   {t:"Les fers de lance servaient à l’agriculture, pas à la guerre", k:["lance","agricult","rituel"]}],
+  e:"1) À l’arrivée des Européens, il restait <b>encore des arbres et des cultures</b> (bananiers, cocotiers, ignames). 2) En 1786, <b>Rollin</b> décrit une population nombreuse et un sol qui nourrit en abondance. 3) L’<b>ADN</b> ne montre <b>pas d’effondrement</b> au XVIIe siècle. 4) Selon Hunt, les <b>rats</b> ont empêché la forêt de repousser. 5) Les <b>fers de lance</b> servaient à l’agriculture ou aux rituels, pas à une guerre de la faim."},
+ {q:"Que nous apprend l’étude ADN, et quelles sont ses limites ?",
+  ideas:[
+   {t:"15 individus anciens étudiés", k:["15 ","quinze"]},
+   {t:"Pas de grand effondrement au XVIIe siècle", k:["goulot","pas d effondrement","pas de grand effondrement","pas de chute","xvii","17e","dix septieme","effondrement"]},
+   {t:"La population augmente jusqu’au XIXe siècle", k:["augment","croiss","xix","19e","dix neuvieme"]},
+   {t:"Limite : l’ADN mesure la population, pas l’impact sur l’environnement", k:["limite","environnement","ecolog","ne mesure pas","pas l impact"]},
+   {t:"Environ 10 % d’ascendance amérindienne", k:["amerind","10 %","10%","10 pour","dix pour"]}],
+  e:"L’ADN de <b>15 individus anciens</b> ne montre <b>pas de « goulot d’étranglement »</b> au XVIIe siècle : la population a plutôt <b>augmenté jusqu’aux bouleversements du XIXe siècle</b>. On y trouve aussi environ <b>10 % d’ascendance amérindienne</b>. <b>Limite</b> : l’ADN étudie l’histoire de la population, il <b>ne mesure pas l’impact écologique</b>. L’étude réfute le grand effondrement, pas l’existence de changements dans l’environnement."},
+ {q:"Expliquez la théorie des rats de Terry Hunt. Tout le monde est-il d’accord ?",
+  ideas:[
+   {t:"Les rats arrivent avec les premiers Polynésiens", k:["polynes","bateau","pirogue","introdui","arriv"]},
+   {t:"Ils mangent les graines des palmiers", k:["graine","noix","mang"]},
+   {t:"La forêt ne peut plus se régénérer", k:["regener","repouss","renouvel"]},
+   {t:"Les Rapa Nui ne sont donc pas seuls responsables", k:["pas seul","responsab"]},
+   {t:"Muñoz n’est pas d’accord (quelques arbres, pas tous)", k:["munoz","pas d accord","quelques arbres","pas tous"]}],
+  e:"Selon <b>Terry Hunt</b>, des <b>rats</b> sont arrivés avec les <b>pirogues des premiers Polynésiens</b>. Ils ont <b>mangé les graines</b> des palmiers, qui <b>n’ont plus pu se régénérer</b>. Les Rapa Nui ne sont donc <b>pas seuls responsables</b> de la disparition de la forêt. Mais <b>Diego Muñoz n’est pas d’accord</b> : les rats ont peut-être détruit quelques arbres, <b>pas tous</b>."},
+ {q:"Comparez les positions de vos deux spécialistes, Diego Muñoz et Terry Hunt.",
+  ideas:[
+   {t:"D’accord sur le rôle majeur des maladies", k:["maladie","variole","epidem"]},
+   {t:"Muñoz : esclavage, maladies, évangélisation", k:["esclav","evangel","mission"]},
+   {t:"Hunt : maladies européennes + rats", k:["hunt"]},
+   {t:"Désaccord sur les rats", k:["rat"]},
+   {t:"Tous deux rejettent l’écocide", k:["ecocide","pas responsable","rejett"]}],
+  e:"Ils sont <b>d’accord</b> sur le rôle très important des <b>maladies</b> et <b>rejettent tous deux l’écocide</b>. <b>Muñoz</b> retient trois facteurs : <b>esclavage, maladies et évangélisation</b>. <b>Hunt</b> insiste sur les maladies européennes et pense que les <b>rats</b> ont réduit les ressources. Ils sont donc en <b>désaccord sur les rats</b>."},
+ {q:"Vos deux spécialistes défendent la même thèse. N’est-ce pas un biais dans votre travail ?",
+  ideas:[
+   {t:"Oui, c’est une limite que je reconnais", k:["limite","biais","oui ","reconna","prudent","mesurer"]},
+   {t:"Les deux défendent la cause « maladies »", k:["maladie"]},
+   {t:"D’autres, comme Jared Diamond, défendent l’écocide", k:["diamond","ecocide"]},
+   {t:"J’ai confronté leurs avis avec d’autres sources (ADN, études, témoins)", k:["confront","source","adn","etude","article","compar"]}],
+  e:"Oui, c’est une <b>limite</b>, et je l’ai signalée dans mon travail : les deux spécialistes sont des <b>défenseurs de la cause « maladies »</b>, alors que d’autres, comme <b>Jared Diamond</b>, défendent l’écocide. C’est pourquoi j’ai <b>confronté leurs avis à d’autres sources</b> : l’étude ADN, l’étude de 2020 sur le climat, le témoignage de Rollin. J’ai même relevé une <b>contradiction</b> entre Muñoz et l’étude ADN."},
+ {q:"Racontez ce qui s’est passé au XIXe siècle selon Diego Muñoz.",
+  ideas:[
+   {t:"Une loi péruvienne (travailleurs chinois) détournée", k:["loi ","lois","chinois"]},
+   {t:"Un tiers de la population enlevé comme esclaves", k:["tiers","esclav","enlev"]},
+   {t:"Une douzaine de survivants rapportent la variole", k:["variole","douzaine","revenu","retour"]},
+   {t:"Les missionnaires partent avec la moitié de la population restante", k:["mission","moitie"]},
+   {t:"En 1871, il ne reste qu’une centaine d’habitants", k:["1871","centaine","cent "]}],
+  e:"Une <b>loi péruvienne</b> autorisait l’immigration de <b>travailleurs chinois</b> ; elle a été détournée vers l’Île de Pâques, plus proche. <b>Un tiers</b> des Rapa Nui a été enlevé et vendu comme <b>esclaves</b>. Après l’abrogation de la loi (10 mois), une <b>douzaine</b> seulement est revenue, en apportant la <b>variole</b>. Puis les <b>missionnaires</b> sont partis avec <b>la moitié</b> de la population restante. En <b>1871</b>, il ne restait qu’<b>une centaine</b> d’habitants."},
+ {q:"Quel rôle a joué le climat dans l’histoire des Rapa Nui ?",
+  ideas:[
+   {t:"Un refroidissement vers 1200–1300 (océans)", k:["refroid","froid","1200","1300"]},
+   {t:"Moins de pêche, disparition de certains arbres", k:["peche","poisson"]},
+   {t:"Petit Âge glaciaire vers 1450–1550", k:["glaciaire","1450","1550"]},
+   {t:"Moins d’eau et de récoltes, donc moins de nourriture par habitant", k:["eau","agricol","recolte","nourriture","production"]},
+   {t:"Le climat n’a pas tout détruit : les Rapa Nui se sont adaptés", k:["adapt","pas detruit","directement"]}],
+  e:"Selon Muñoz, vers <b>1200–1300</b>, un <b>refroidissement mondial</b> des océans a fait baisser la <b>pêche</b> et disparaître certains arbres : les Rapa Nui ont dû <b>s’adapter</b>. L’étude de 2020 situe une première période de déclin vers <b>1450–1550</b>, pendant le <b>Petit Âge glaciaire</b>. Le climat <b>n’a pas détruit directement</b> la société, mais il a réduit <b>l’eau et les récoltes</b>, donc la <b>nourriture par habitant</b>."},
+ {q:"Pourquoi la découverte d’un contact avec les Amérindiens est-elle importante pour votre sujet ?",
+  ideas:[
+   {t:"Un contact avant les Européens (vers 1250–1430)", k:["1250","1430","avant les europ","avant l arrivee","pre europ","precolomb"]},
+   {t:"L’île n’était pas totalement isolée", k:["isol"]},
+   {t:"Les Rapa Nui savaient naviguer et s’adapter", k:["navig","bateau","pirogue","voyag","adapt"]},
+   {t:"Contredit l’isolement total décrit par Muñoz", k:["munoz","contradi","contredit"]},
+   {t:"Prudence : on ne sait pas qui a voyagé ni comment", k:["prudent","prudence","ne sait pas","qui a voyage","route"]}],
+  e:"L’ADN montre un mélange avec des Amérindiens de la côte Pacifique d’Amérique du Sud vers <b>1250–1430</b>, donc <b>avant les Européens</b>. L’île n’était donc <b>pas totalement isolée</b>, et les Rapa Nui avaient une <b>capacité d’adaptation et de navigation</b> plus grande que dans le récit de l’écocide. Cela <b>contredit Muñoz</b>, qui parle d’isolement complet. Mais il faut rester <b>prudent</b> : on ne sait pas <b>qui a voyagé vers qui</b>, ni par quelles routes."},
+ {q:"Quelle est votre conclusion : facteurs internes ou externes ?",
+  ideas:[
+   {t:"Les facteurs externes ont été déterminants", k:["externe","exterieur","determin"]},
+   {t:"Maladies et esclavage", k:["maladie","esclav"]},
+   {t:"Pas une seule cause : plusieurs facteurs et plusieurs périodes", k:["plusieurs","une seule","accumul","multiple","periode"]},
+   {t:"Distinguer changement de l’environnement et baisse de la population", k:["distingu","environnement"]},
+   {t:"Certaines étapes restent discutées", k:["discut","ouvert","debat","incertain"]}],
+  e:"Je considère que <b>les facteurs extérieurs</b>, surtout les <b>maladies et l’esclavage</b>, ont joué un <b>rôle déterminant</b> dans la catastrophe démographique. Mais il n’y a <b>pas une seule cause</b> : il faut considérer <b>plusieurs facteurs et plusieurs périodes</b>, et <b>distinguer</b> les transformations de l’environnement de la baisse de la population. Certaines étapes plus anciennes <b>restent discutées</b>."},
+ {q:"Pourquoi, selon vous, l’hypothèse de l’écocide a-t-elle eu autant de succès ?",
+  ideas:[
+   {t:"C’est un récit simple et « vendeur »", k:["vendeur","recit","histoire","simple"]},
+   {t:"Elle sert de leçon écologique pour aujourd’hui", k:["lecon","ecolog","aujourd","actuel","morale"]},
+   {t:"Elle n’est pourtant pas prouvée", k:["pas prouve","prouv","invent"]},
+   {t:"Elle accuse la population d’être seule responsable", k:["responsab","accus","coupable"]}],
+  e:"Selon Muñoz, c’est un <b>récit « vendeur »</b> qui fonctionne bien comme histoire, mais <b>pas prouvé</b>, en partie inventé. Il sert aussi de <b>leçon écologique</b> pour notre époque. Le problème : il <b>désigne la population comme seule responsable</b> de son déclin, alors que les maladies et l’esclavage ont joué un rôle majeur."},
+ {q:"Dans votre travail, distinguez un fait établi, une hypothèse et une interprétation.",
+  ideas:[
+   {t:"Un fait établi (ex. : Roggeveen 1722, raids 1862–1863, Chili 1888)", k:["fait","1722","1862","1863","1888","roggeveen"]},
+   {t:"Une hypothèse (ex. : écocide, rats, climat)", k:["hypothese","ecocide","rat","climat"]},
+   {t:"Une interprétation (ex. : l’avis de Muñoz ou de Hunt)", k:["interpret","avis","munoz","hunt","selon"]},
+   {t:"Pourquoi c’est important : ne pas prendre une théorie pour une vérité", k:["important","verite","mefi","prudent","definitiv"]}],
+  e:"<b>Fait établi</b> : Roggeveen arrive le 5 avril 1722 ; les raids péruviens ont lieu en 1862–1863 ; le Chili annexe l’île en 1888. <b>Hypothèse</b> : l’écocide, la théorie des rats, le rôle du climat. <b>Interprétation</b> : l’avis de Muñoz pour qui l’écocide est « vendeur », ou celui de Hunt pour qui la déforestation n’était pas un problème. Les distinguer évite de <b>prendre une théorie pour une vérité définitive</b>."},
+ {q:"Qu’est-ce que votre visite au Wereldmuseum de Leiden vous a apporté ?",
+  ideas:[
+   {t:"Des objets d’époque (hameçons, vêtements, moaï, homme-oiseau)", k:["objet","hamecon","vetement","sac","homme oiseau","homme-oiseau","statue","moai"]},
+   {t:"Les fers de lance servaient à l’agriculture ou aux rituels", k:["lance","agricult","rituel"]},
+   {t:"Les esclaves revenus du Pérou ont apporté les maladies", k:["esclav","perou","maladie"]},
+   {t:"Le premier missionnaire a été mal accueilli", k:["mission","mal accueil"]},
+   {t:"Honnêtement : peu de nouveau sur le déclin, car visite en fin de travail", k:["a la fin","peu de","pas appris","complet"]}],
+  e:"J’ai vu des <b>objets d’époque</b> (hameçons, vêtements, sacs, un moaï, une figurine d’<b>homme-oiseau</b>). J’ai appris que les <b>fers de lance</b> servaient à l’agriculture ou aux rituels, pas à la guerre. Les panneaux confirmaient que le <b>retour des esclaves du Pérou</b> a ramené les maladies, et que le <b>premier missionnaire</b> a été mal accueilli. Comme la visite a eu lieu <b>à la fin</b> du travail, elle a surtout <b>complété</b> mes connaissances."},
+ {q:"La déforestation a-t-elle vraiment eu lieu ? A-t-elle causé le déclin ?",
+  ideas:[
+   {t:"Oui, une forêt de palmiers a existé et a disparu", k:["oui ","palmier","foret","pollen","flenley"]},
+   {t:"Plusieurs causes : humains, feu, rats", k:["rat","feu","humain","plusieurs"]},
+   {t:"Selon Hunt, ce n’était pas forcément un problème (capacité productive)", k:["productiv","pas forcement","pas un probleme","agricol","cultur"]},
+   {t:"Ce n’est pas la cause principale de la baisse de population", k:["pas la cause","principal","population","ne suffit pas","a elle seule"]}],
+  e:"<b>Oui</b> : les <b>pollens fossiles</b> (John Flenley) prouvent qu’une <b>forêt de palmiers</b> existait et a disparu. Les causes sont <b>multiples</b> : défrichage par le <b>feu</b> pour cultiver, et <b>rats</b> qui mangeaient les graines. Selon Hunt, ce n’était <b>pas forcément un problème</b> : la <b>capacité productive</b> a même augmenté. La déforestation <b>ne suffit pas à elle seule</b> à expliquer la baisse de la population."},
+ {q:"Les Rapa Nui ont-ils disparu ? Que reste-t-il de leur culture ?",
+  ideas:[
+   {t:"Non, environ 6 000 Rapa Nui aujourd’hui", k:["6000","6 000","six mille","non "]},
+   {t:"Dont environ 2 000 sur le continent chilien", k:["2000","2 000","continent","chili"]},
+   {t:"La langue rapa nui est encore parlée (à côté de l’espagnol)", k:["langue","espagnol","parle"]},
+   {t:"Une identité forte, dont ils sont fiers", k:["fier","identite","culture"]}],
+  e:"<b>Non</b>. Il y a environ <b>6 000 Rapa Nui</b>, dont près de <b>2 000 sur le continent chilien</b>. La <b>langue rapa nui</b> est encore parlée, même si l’espagnol est très utilisé. Ils ont une <b>identité culturelle forte</b> et en sont fiers. C’est pourquoi on parle de <b>déclin</b>, pas de disparition."},
+ {q:"Si vous deviez refaire ce travail, que changeriez-vous ?",
+  ideas:[
+   {t:"Interroger aussi un défenseur de l’écocide, pour équilibrer", k:["ecocide","diamond","autre avis","equilibr","defenseur"]},
+   {t:"Visiter le musée plus tôt", k:["musee","plus tot","debut"]},
+   {t:"Consulter plus de sources ou d’études", k:["source","etude","plus de","article"]}],
+  e:"Piste de réponse : j’essaierais d’<b>interroger aussi un défenseur de l’écocide</b>, pour équilibrer les deux spécialistes qui défendent la cause « maladies ». J’irais au <b>musée plus tôt</b>, car ma visite a eu lieu à la fin de la rédaction. Et je chercherais encore <b>d’autres études</b> pour confronter les sources. (À adapter avec tes propres mots !)"},
+ {q:"Quel enseignement tirez-vous de ce travail pour aujourd’hui ?",
+  ideas:[
+   {t:"Se méfier des explications trop simples", k:["simple","mefi"]},
+   {t:"Ne pas accuser une population d’être seule responsable", k:["responsab","accus","coupable"]},
+   {t:"Le lien entre les sociétés et leur environnement", k:["environnement","ressource","nature"]},
+   {t:"Préserver sa culture, sa langue et ses traditions face aux changements", k:["tradition","langue","cultur","preserv","adapt"]}],
+  e:"J’ai appris à me <b>méfier des explications trop simples</b> et des récits qui <b>accusent une population</b> d’être seule responsable de son déclin. L’histoire des Rapa Nui montre aussi le <b>lien entre les sociétés et leur environnement</b>. Enfin, elle pose une question actuelle : comment <b>s’adapter aux changements</b> tout en <b>préservant ses traditions, sa langue et sa vision du monde</b> ?"},
+ {q:"Pourquoi l’enlèvement des chefs et des prêtres en 1862–1863 a-t-il été si grave ?",
+  ideas:[
+   {t:"L’organisation politique a été affaiblie", k:["politi","pouvoir","organisation","chef"]},
+   {t:"L’organisation religieuse a été affaiblie", k:["religi","croyance","pretre"]},
+   {t:"Ce n’est pas seulement une perte d’habitants, c’est toute la société qui est déstabilisée", k:["societ","structure","destabil","fragilis"]},
+   {t:"Ensuite les missionnaires ont changé les croyances", k:["mission","evangel","bapt"]}],
+  e:"Avec les chefs et les prêtres, ce sont les <b>structures politiques et religieuses</b> traditionnelles qui ont été affaiblies. Ce n’est donc pas seulement une perte d’habitants : c’est <b>toute l’organisation de la société</b> qui est <b>déstabilisée</b>. Ensuite, les <b>missionnaires</b> ont bouleversé les croyances et baptisé la population."},
+ {q:"Quelles sont les trois périodes de déclin identifiées par l’étude de 2020, et que montrent-elles ?",
+  ideas:[
+   {t:"1450–1550, Petit Âge glaciaire (climat)", k:["1450","1550","glaciaire","climat"]},
+   {t:"1722–1774, après l’arrivée des Européens, causes incertaines", k:["1722","1774","incertain"]},
+   {t:"XIXe siècle : maladies et esclavage", k:["19e","xix","dix neuvieme","maladie","esclav"]},
+   {t:"Il faut penser en plusieurs périodes et plusieurs causes", k:["plusieurs","une seule","periode"]}],
+  e:"L’étude de 2020 (modèles mathématiques) identifie : <b>1450–1550</b>, pendant le <b>Petit Âge glaciaire</b>, environ 200 ans avant les Européens ; <b>1722–1774</b>, après leur arrivée, aux <b>causes incertaines</b> ; et le <b>XIXe siècle</b>, avec les <b>maladies et l’esclavage</b>. Cela montre qu’il faut raisonner en <b>plusieurs périodes</b> avec des <b>causes différentes</b>."}
+];
+
+/* ========================================================= */
+const LEVELS = {
+  facile:{name:"Facile", icon:"🌱", sub:"Comprendre la réflexion", desc:"Questions à choix : problématique, hypothèses, arguments pour et contre, avis des spécialistes, conclusion.", bank:QCM, perGame:15, time:25, kind:"qcm"},
+  difficile:{name:"Difficile", icon:"🔥", sub:"Questions du jury", desc:"Comme à la soutenance : tu réponds à voix haute 🎤 (ça s’écrit tout seul), puis tu compares avec les idées clés.", bank:ORAL, perGame:6, time:120, kind:"oral"}
+};
+const SHAPES = [
+  '<svg viewBox="0 0 30 30"><polygon points="15,3 28,27 2,27" fill="#fff"/></svg>',
+  '<svg viewBox="0 0 30 30"><polygon points="15,2 28,15 15,28 2,15" fill="#fff"/></svg>',
+  '<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="#fff"/></svg>',
+  '<svg viewBox="0 0 30 30"><rect x="4" y="4" width="22" height="22" fill="#fff"/></svg>'
+];
+const norm = s => (" "+s+" ").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9%]+/g," ");
+QCM.forEach((q,i)=>q.id="r-qcm-"+i);
+// un mot-clé doit commencer un mot ; un espace final exige le mot exact
+const normK = k => " "+k.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'\-]/g," ");
+ORAL.forEach((q,i)=>{ q.id="r-oral-"+i; q.ideas.forEach(d=>d.nk=d.k.map(normK)); });
+
+/* ---------- mémoire (sur cet appareil) ---------- */
+const KEY_H="rapanui_hist_v2", KEY_M="rapanui_mastery_v2", KEY_P="rapanui_prefs_v2";
+function load(k,def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+let history = load(KEY_H,[]);
+let mastery = load(KEY_M,{});
+let prefs = load(KEY_P,{level:"facile",chrono:false});
+
+/* ---------- utilitaires ---------- */
+const $ = id => document.getElementById(id);
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id)); window.scrollTo(0,0); }
+function masteredCount(l){ return LEVELS[l].bank.filter(q=>mastery[q.id]&&mastery[q.id].ok).length; }
+function esc(s){ return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------- lecture à voix haute ---------- */
+function speakText(t){
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="fr-FR"; u.rate=0.95; speechSynthesis.speak(u); }catch(e){}
+}
+
+/* ---------- dictée vocale ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec=null, recWanted=false, baseText="", finalText="";
+function micSupported(){ return !!SR; }
+function startMic(){
+  const ta=$("oralText"), btn=$("micBtn");
+  if (!SR) return;
+  recWanted = true;
+  baseText = ta.value.trim() ? ta.value.trim()+" " : "";
+  finalText = "";
+  rec = new SR();
+  rec.lang = "fr-FR"; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = e=>{
+    let interim="";
+    for (let i=e.resultIndex;i<e.results.length;i++){
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += t.trim()+" "; else interim += t;
+    }
+    ta.value = baseText + finalText + interim;
+    ta.scrollTop = ta.scrollHeight;
+  };
+  rec.onerror = e=>{
+    if (e.error==="not-allowed" || e.error==="service-not-allowed"){
+      recWanted=false;
+      $("micMsg").innerHTML = '<div class="warn">🎤 Le micro est bloqué. Autorise le micro pour cette page (icône à gauche de l’adresse), ou utilise le micro du clavier de ton téléphone.</div>';
+    }
+  };
+  rec.onend = ()=>{
+    if (recWanted){ // Chrome coupe après un silence : on relance
+      baseText = ta.value.trim() ? ta.value.trim()+" " : ""; finalText="";
+      try{ rec.start(); return; }catch(e){}
+    }
+    recWanted=false; setMicUI(false);
+  };
+  try{ rec.start(); setMicUI(true); }catch(e){ recWanted=false; setMicUI(false); }
+}
+function stopMic(){ recWanted=false; if (rec){ try{ rec.stop(); }catch(e){} } setMicUI(false); }
+function setMicUI(on){
+  const b=$("micBtn"); if(!b) return;
+  b.classList.toggle("on",on);
+  b.innerHTML = on ? "⏹️ Arrêter (je t’écoute…)" : "🎤 Répondre à voix haute";
+}
+
+/* ---------- accueil ---------- */
+function renderHome(){
+  $("levels").innerHTML = Object.keys(LEVELS).map(l=>{
+    const L=LEVELS[l], n=L.bank.length, m=masteredCount(l), pct=Math.round(m/n*100);
+    return `<button class="lvl ${prefs.level===l?"sel":""}" data-l="${l}">
+      <div class="t">${L.icon} ${L.name} <span style="font-weight:500;font-size:1.05rem">· ${L.sub}</span></div>
+      <div class="d">${L.desc}</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="mast">Maîtrisées : ${m} / ${n} questions ${m===n?"· 🏆 Incollable !":""}</div>
+    </button>`;
+  }).join("");
+  $("levels").querySelectorAll(".lvl").forEach(b=>b.onclick=()=>{ prefs.level=b.dataset.l; save(KEY_P,prefs); renderHome(); });
+  $("chronoSeg").querySelectorAll("button").forEach(b=>{
+    b.classList.toggle("sel", (b.dataset.v==="1")===prefs.chrono);
+    b.onclick=()=>{ prefs.chrono=b.dataset.v==="1"; save(KEY_P,prefs); renderHome(); };
+  });
+}
+
+/* ---------- partie ---------- */
+let G=null, timerId=null;
+
+function pickQuestions(l){
+  const L=LEVELS[l];
+  const pool = shuffle(L.bank);
+  pool.sort((a,b)=>{
+    const pa = mastery[a.id] ? (mastery[a.id].ok?2:0) : 1;
+    const pb = mastery[b.id] ? (mastery[b.id].ok?2:0) : 1;
+    return pa-pb;
+  });
+  return shuffle(pool.slice(0, Math.min(L.perGame, pool.length)));
+}
+
+function startGame(list){
+  const L=LEVELS[prefs.level];
+  G = { level:prefs.level, kind:L.kind, chrono:prefs.chrono, list:list||pickQuestions(prefs.level),
+        i:0, points:0, streak:0, answers:[], locked:false, isRetry:!!list, cur:null };
+  show("game"); renderQuestion();
+}
+
+function scoreLabel(){
+  if (G.chrono || G.kind==="oral") return `${G.points} pts`;
+  return `${G.answers.filter(a=>a.ok).length} ✓`;
+}
+
+function startTimer(onEnd){
+  clearInterval(timerId);
+  $("timerBox").style.display = G.chrono ? "" : "none";
+  if (!G.chrono) return;
+  const total = LEVELS[G.level].time*1000;
+  G.t0 = performance.now();
+  const tick=()=>{
+    const left=Math.max(0,total-(performance.now()-G.t0));
+    $("timerFill").style.width=(left/total*100)+"%";
+    $("timerLine").classList.toggle("low", left<Math.min(10000,total*.2));
+    const s=Math.ceil(left/1000);
+    $("timeNum").textContent = s>=60 ? `${Math.floor(s/60)} min ${String(s%60).padStart(2,"0")}` : s+" s";
+    if (left<=0){ clearInterval(timerId); onEnd(); }
+  };
+  tick(); timerId=setInterval(tick,100);
+}
+
+function renderQuestion(){
+  const q=G.list[G.i];
+  G.locked=false;
+  $("qNum").textContent=`${G.i+1} / ${G.list.length}`;
+  $("scoreTop").textContent=scoreLabel();
+  $("feedback").innerHTML="";
+  $("qCard").innerHTML = `<div class="tag">${G.kind==="oral"?"🎓 Question du jury":"🧠 Comprendre la réflexion"}</div>
+    <div>${esc(q.q)}</div>
+    <button class="speak" id="speakBtn">🔊 Écouter la question</button>`;
+  $("speakBtn").onclick=()=>speakText(q.q);
+  if (G.kind==="oral") renderOral(q); else renderQcm(q);
+}
+
+/* ----- QCM ----- */
+function renderQcm(q){
+  G.order = q.tf ? q.a.map((_,i)=>i) : shuffle(q.a.map((_,i)=>i));
+  $("answerZone").innerHTML = `<div class="answers" id="answers">${G.order.map((orig,pos)=>{
+    const col = q.tf ? (orig===0?1:0) : pos;
+    return `<button class="ans c${col}" data-o="${orig}">${SHAPES[col]}<span>${esc(q.a[orig])}</span></button>`;
+  }).join("")}</div>`;
+  $("answers").querySelectorAll(".ans").forEach(b=>b.onclick=()=>answerQcm(+b.dataset.o));
+  startTimer(()=>answerQcm(-1));
+}
+
+function answerQcm(orig){
+  if (G.locked) return;
+  G.locked=true; clearInterval(timerId);
+  const q=G.list[G.i], ok = orig===q.c;
+  let gained=0;
+  if (ok){
+    G.streak++;
+    if (G.chrono){ const total=LEVELS[G.level].time*1000; const left=Math.max(0,total-(performance.now()-G.t0)); gained=Math.round(500+500*left/total); }
+    else gained=1000;
+    G.points+=gained;
+  } else G.streak=0;
+  G.answers.push({q, chosen:orig, ok, pct: ok?1:0});
+  updateMastery(q, ok);
+
+  const box=$("answers"); box.classList.add("done");
+  box.querySelectorAll(".ans").forEach(b=>{
+    const o=+b.dataset.o;
+    if (o===q.c){ b.classList.add("right"); b.insertAdjacentHTML("beforeend",'<span class="mark">✔</span>'); }
+    else if (o===orig){ b.classList.add("wrong"); b.insertAdjacentHTML("beforeend",'<span class="mark">✘</span>'); }
+  });
+  $("scoreTop").textContent=scoreLabel();
+  let head;
+  if (ok){
+    const cheers=["Bravo, c’est juste !","Exact !","Bien joué, c’est juste !","Parfait, c’est la bonne réponse !"];
+    head=`✅ ${cheers[Math.floor(Math.random()*cheers.length)]}`;
+    if (G.chrono) head+=` <span class="pts">+${gained} pts</span>`;
+    if (G.streak>=3) head+=` <span class="pts">🔥 Série de ${G.streak}</span>`;
+  } else head = orig===-1 ? "⏰ Temps écoulé !" : "❌ Faux !";
+  $("feedback").innerHTML=`<div class="fb ${ok?"ok":"ko"}">
+    <div class="h">${head}</div>
+    ${ok?"":`<div class="good">La bonne réponse : ${esc(q.a[q.c])}</div>`}
+    <div class="ex">💡 ${q.e}</div>
+    <button class="next" id="nextBtn">${G.i===G.list.length-1?"Voir mes résultats →":"Question suivante →"}</button>
+  </div>`;
+  $("nextBtn").onclick=next;
+  $("nextBtn").focus({preventScroll:true});
+  $("feedback").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ----- ORAL ----- */
+function renderOral(q){
+  $("answerZone").innerHTML = `<div class="oral">
+    ${micSupported()
+      ? `<button class="mic" id="micBtn">🎤 Répondre à voix haute</button>`
+      : `<div class="warn">🎤 La dictée vocale ne marche pas dans ce navigateur. Ouvre la page dans <b>Chrome, Edge ou Safari</b>, ou utilise le micro du clavier de ton téléphone pour dicter.</div>`}
+    <div id="micMsg"></div>
+    <textarea id="oralText" placeholder="Ta réponse s’écrit ici quand tu parles. Tu peux aussi taper ou corriger le texte."></textarea>
+    <div class="hint">Réponds comme devant le jury : des phrases complètes, avec des noms, des dates et des arguments.</div>
+    <button class="big" id="validateBtn">Valider ma réponse</button>
+  </div>`;
+  if (micSupported()) $("micBtn").onclick=()=>{ recWanted ? stopMic() : startMic(); };
+  $("oralText").addEventListener("input",()=>{ if(recWanted){ baseText=$("oralText").value; finalText=""; } });
+  $("validateBtn").onclick=()=>answerOral();
+  startTimer(()=>answerOral(true));
+}
+
+function detectIdeas(q, text){
+  const t = norm(text);
+  return q.ideas.map(d=>d.nk.some(k=>k.trim() && t.includes(k)));
+}
+
+function answerOral(timeout){
+  if (G.locked) return;
+  const text = $("oralText").value.trim();
+  if (!text && !timeout){
+    $("micMsg").innerHTML='<div class="warn">Dis ou écris ta réponse avant de valider 🙂</div>'; return;
+  }
+  G.locked=true; clearInterval(timerId); stopMic();
+  $("oralText").readOnly=true;
+  $("validateBtn").style.display="none";
+  if ($("micBtn")) $("micBtn").style.display="none";
+  const q=G.list[G.i];
+  G.cur = {q, text, got:detectIdeas(q,text), timeout:!!timeout};
+  G.answers.push(G.cur);
+  renderOralFeedback();
+  $("feedback").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function renderOralFeedback(){
+  const a=G.cur, q=a.q;
+  const n=q.ideas.length, k=a.got.filter(Boolean).length, pct=k/n;
+  a.pct=pct; a.ok = pct>=0.6;
+  const cls = pct>=0.6 ? "ok" : pct>=0.3 ? "mid" : "ko";
+  let head;
+  if (!a.text) head="⏰ Temps écoulé, pas de réponse";
+  else if (pct===1) head="🏆 Réponse complète !";
+  else if (pct>=0.6) head="✅ Bonne réponse !";
+  else if (pct>=0.3) head="🟠 C’est un début, il manque des idées";
+  else head="❌ Il manque l’essentiel";
+  $("feedback").innerHTML=`<div class="fb ${cls}">
+    <div class="h">${head} <span class="pts">${k} / ${n} idées clés</span></div>
+    <div class="good" style="font-weight:500">Touche une idée pour la cocher si tu l’as dite avec d’autres mots.</div>
+    <div class="ideas">${q.ideas.map((d,i)=>`<button class="idea ${a.got[i]?"got":""}" data-i="${i}">
+       <span class="ic">${a.got[i]?"✔":"?"}</span><span>${d.t}<small>${a.got[i]?"Tu l’as dit":"Pas trouvé dans ta réponse"}</small></span></button>`).join("")}</div>
+    <div class="ex">💡 <b>Réponse modèle :</b><br>${q.e}</div>
+    <button class="speak" id="speakModel" style="margin-top:10px">🔊 Écouter la réponse modèle</button>
+    <button class="next" id="nextBtn">${G.i===G.list.length-1?"Voir mes résultats →":"Question suivante →"}</button>
+  </div>`;
+  $("feedback").querySelectorAll(".idea").forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; a.got[i]=!a.got[i]; renderOralFeedback(); });
+  const tmp=document.createElement("div"); tmp.innerHTML=q.e;
+  $("speakModel").onclick=()=>speakText(tmp.textContent);
+  $("nextBtn").onclick=next;
+}
+
+function updateMastery(q, ok){
+  const m = mastery[q.id] || {ok:false, seen:0, right:0};
+  m.seen++; if (ok) m.right++; m.ok=ok;
+  mastery[q.id]=m; save(KEY_M,mastery);
+}
+
+function next(){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  if (G.kind==="oral" && G.cur){
+    G.points += Math.round(1000*G.cur.pct);
+    updateMastery(G.cur.q, G.cur.ok);
+    G.cur=null;
+  }
+  if (G.i < G.list.length-1){ G.i++; renderQuestion(); }
+  else finish();
+}
+
+function finish(){
+  const L=LEVELS[G.level], n=G.list.length;
+  let ok, tot, pct;
+  if (G.kind==="oral"){
+    ok = G.answers.reduce((s,a)=>s+a.got.filter(Boolean).length,0);
+    tot = G.answers.reduce((s,a)=>s+a.q.ideas.length,0);
+  } else { ok=G.answers.filter(a=>a.ok).length; tot=n; }
+  pct = tot ? Math.round(ok/tot*100) : 0;
+  history.push({d:new Date().toISOString(), lvl:G.level, chrono:G.chrono, ok, n:tot, pct, pts:G.points, retry:G.isRetry});
+  save(KEY_H,history);
+
+  let msg;
+  if (pct===100) msg="🏆 Parfait ! Tu es prête pour le jury sur cette série.";
+  else if (pct>=80) msg="🎉 Excellent ! Encore un petit effort et tu seras incollable.";
+  else if (pct>=60) msg="👍 Bien ! Relis les réponses modèles juste en dessous.";
+  else if (pct>=40) msg="💪 Pas mal, continue : relis les explications et rejoue.";
+  else msg="📚 C’est le début : relis les explications et retravaille tes points faibles.";
+  const m=masteredCount(G.level), all=L.bank.length;
+  $("scoreCard").innerHTML=`
+    <div style="color:var(--muted);font-weight:600">${L.icon} ${L.name} · ${L.sub}${G.isRetry?" · points faibles":""} · ${G.chrono?"avec chrono":"sans chrono"}</div>
+    <div class="big-n">${ok} / ${tot}</div>
+    <div style="color:var(--muted)">${G.kind==="oral"?"idées clés citées":"bonnes réponses"}</div>
+    <div class="msg">${msg}</div>
+    <div class="stats">
+      <div class="stat"><b>${pct} %</b><span>de réussite</span></div>
+      <div class="stat"><b>${(G.chrono||G.kind==="oral")?G.points:"—"}</b><span>points</span></div>
+      <div class="stat"><b>${m}/${all}</b><span>maîtrisées</span></div>
+    </div>
+    ${m===all?'<div class="badge">🏆 Niveau '+L.name+' : incollable !</div>':""}`;
+
+  const weak=G.answers.filter(a=>!a.ok);
+  $("errBtn").style.display = weak.length ? "" : "none";
+  const sorted = weak.concat(G.answers.filter(a=>a.ok));
+  $("review").innerHTML = sorted.map(a=>{
+    if (G.kind==="oral"){
+      const k=a.got.filter(Boolean).length, nn=a.q.ideas.length;
+      const cls = a.pct>=0.6?"":a.pct>=0.3?"mid":"ko";
+      return `<div class="rv ${cls}">
+        <div class="q">${a.pct>=0.6?"✅":a.pct>=0.3?"🟠":"❌"} ${esc(a.q.q)} <span style="color:var(--muted);font-weight:500">(${k}/${nn} idées)</span></div>
+        <div class="said">${a.text?esc(a.text):"Pas de réponse"}</div>
+        ${a.q.ideas.some((d,i)=>!a.got[i])?`<div class="a"><b>Idées manquantes :</b> ${a.q.ideas.filter((d,i)=>!a.got[i]).map(d=>d.t).join(" · ")}</div>`:""}
+        <div class="e">💡 ${a.q.e}</div>
+      </div>`;
+    }
+    return `<div class="rv ${a.ok?"":"ko"}">
+      <div class="q">${a.ok?"✅":"❌"} ${esc(a.q.q)}</div>
+      <div class="a">${a.ok?"Ta réponse : <b>"+esc(a.q.a[a.q.c])+"</b>"
+        :(a.chosen===-1?"Pas de réponse (temps écoulé)":"Ta réponse : "+esc(a.q.a[a.chosen]))+"<br>Bonne réponse : <b>"+esc(a.q.a[a.q.c])+"</b>"}</div>
+      ${a.ok?"":`<div class="e">💡 ${a.q.e}</div>`}
+    </div>`;
+  }).join("");
+  show("result");
+}
+
+/* ---------- historique ---------- */
+function fmtDate(iso){
+  const d=new Date(iso);
+  return d.toLocaleDateString("fr-CH",{day:"2-digit",month:"2-digit",year:"2-digit"})+" "+d.toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"});
+}
+function renderHistory(){
+  $("sum").innerHTML = Object.keys(LEVELS).map(l=>{
+    const L=LEVELS[l], games=history.filter(h=>h.lvl===l), pcts=games.map(h=>h.pct);
+    const best=pcts.length?Math.max(...pcts):0, avg=pcts.length?Math.round(pcts.reduce((s,x)=>s+x,0)/pcts.length):0;
+    const bestPts=games.reduce((s,h)=>Math.max(s,h.pts||0),0);
+    const m=masteredCount(l), tot=L.bank.length, last=pcts.slice(-12);
+    return `<div class="sumc">
+      <h3>${L.icon} ${L.name} · ${L.sub}</h3>
+      <div class="l"><span>Parties jouées</span><b>${games.length}</b></div>
+      <div class="l"><span>Meilleur score</span><b>${games.length?best+" %":"—"}</b></div>
+      <div class="l"><span>Moyenne</span><b>${games.length?avg+" %":"—"}</b></div>
+      <div class="l"><span>Record de points</span><b>${bestPts||"—"}</b></div>
+      <div class="l"><span>Questions maîtrisées</span><b>${m} / ${tot}</b></div>
+      <div class="bar" style="margin-top:6px"><i style="width:${Math.round(m/tot*100)}%"></i></div>
+      ${m===tot?'<div class="badge">🏆 Incollable !</div>':""}
+      ${last.length?`<div class="spark">${last.map(p=>`<i style="height:${Math.max(p,4)}%"></i>`).join("")}</div>
+      <div class="mast">Réussite de tes ${last.length} dernière(s) partie(s)</div>`:""}
+    </div>`;
+  }).join("");
+  $("histTable").innerHTML = !history.length
+    ? '<div class="empty">Aucune partie pour l’instant. Lance une partie pour voir tes résultats ici !</div>'
+    : `<table><thead><tr><th>Date</th><th>Niveau</th><th>Chrono</th><th>Score</th><th>Points</th></tr></thead><tbody>${
+      history.slice().reverse().map(h=>`<tr><td>${fmtDate(h.d)}</td><td>${LEVELS[h.lvl]?LEVELS[h.lvl].name:h.lvl}${h.retry?" (points faibles)":""}</td><td>${h.chrono?"Oui":"Non"}</td><td><b>${h.pct} %</b> <span style="color:var(--muted)">(${h.ok}/${h.n})</span></td><td>${h.pts||"—"}</td></tr>`).join("")
+    }</tbody></table>`;
+  show("history");
+}
+
+/* ---------- boutons ---------- */
+$("startBtn").onclick=()=>startGame();
+$("againBtn").onclick=()=>{ prefs.level=G.level; startGame(); };
+$("errBtn").onclick=()=>startGame(shuffle(G.answers.filter(a=>!a.ok).map(a=>a.q)));
+$("homeBtn").onclick=()=>{ renderHome(); show("home"); };
+/* fenêtre de confirmation dans la page (les fenêtres du navigateur sont parfois bloquées) */
+function askConfirm(msg, yesLabel, onYes){
+  $("modalMsg").textContent=msg; $("modalYes").textContent=yesLabel;
+  $("modal").hidden=false; $("modalNo").focus();
+  $("modalNo").onclick=()=>{ $("modal").hidden=true; };
+  $("modalYes").onclick=()=>{ $("modal").hidden=true; onYes(); };
+}
+function quitGame(){ clearInterval(timerId); stopMic(); try{speechSynthesis.cancel();}catch(e){} G=null; renderHome(); show("home"); }
+$("quitBtn").onclick=()=>{
+  if (!G || !G.answers.length) return quitGame();   // rien répondu : on quitte tout de suite
+  askConfirm("Quitter la partie ? Elle ne sera pas comptée dans tes résultats.", "Oui, quitter", quitGame);
+};
+$("histBtn").onclick=renderHistory;
+$("histBack").onclick=()=>{ renderHome(); show("home"); };
+$("howBtn").onclick=()=>{ $("howto").hidden=!$("howto").hidden; };
+$("resetBtn").onclick=()=>askConfirm("Effacer tous tes résultats et ta progression ? Ça ne peut pas être annulé.", "Oui, effacer", ()=>{ history=[]; mastery={}; save(KEY_H,history); save(KEY_M,mastery); renderHistory(); });
+
+document.addEventListener("keydown",e=>{
+  if (!$("game").classList.contains("active") || !G) return;
+  if (e.target.tagName==="TEXTAREA") return;
+  if (G.kind==="qcm" && !G.locked && /^[1-4]$/.test(e.key)){
+    const b=$("answers").querySelectorAll(".ans")[+e.key-1]; if (b) b.click();
+  } else if (G.locked && e.key==="Enter"){ e.preventDefault(); next(); }
+});
+
+renderHome();
+</script>
+</body>
+</html>
