@@ -125,6 +125,8 @@ tr:last-child td{border-bottom:0}
 .howto li{margin:6px 0;line-height:1.4}
 .foot{text-align:center;opacity:.6;font-size:.9rem;margin-top:24px}
 
+.toast{position:fixed;left:16px;right:16px;bottom:16px;max-width:560px;margin:0 auto;background:#fff;color:var(--ink);border-left:8px solid var(--accent);border-radius:14px;padding:14px 16px;font-size:1.02rem;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.35);z-index:60;animation:pop .2s ease-out}
+.toast[hidden]{display:none}
 .modal{position:fixed;inset:0;background:rgba(10,8,30,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
 .modal[hidden]{display:none}
 .modal .box{background:var(--card);color:var(--ink);border-radius:18px;padding:22px;max-width:420px;width:100%;text-align:center;animation:pop .2s ease-out}
@@ -163,6 +165,14 @@ tr:last-child td{border-bottom:0}
     <div class="seg" id="chronoSeg">
       <button data-v="1">⏱️ Avec chrono<small>Comme le jour J : réponds sans trop hésiter</small></button>
       <button data-v="0">🧘 Sans chrono<small>Prends ton temps pour réfléchir</small></button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="label">3. Lire les questions à voix haute ?</div>
+    <div class="seg" id="readSeg">
+      <button data-v="1">🔊 Oui<small>Chaque question est lue, comme posée par le jury</small></button>
+      <button data-v="0">🔇 Non<small>Je lis moi-même (bouton 🔊 toujours dispo)</small></button>
     </div>
   </div>
 
@@ -226,6 +236,8 @@ tr:last-child td{border-bottom:0}
 </section>
 
 </div>
+
+<div class="toast" id="toast" hidden role="status"></div>
 
 <div class="modal" id="modal" hidden>
   <div class="box" role="dialog" aria-modal="true">
@@ -503,8 +515,41 @@ function masteredCount(l){ return LEVELS[l].bank.filter(q=>mastery[q.id]&&master
 function esc(s){ return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 /* ---------- lecture à voix haute ---------- */
-function speakText(t){
-  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="fr-FR"; u.rate=0.95; speechSynthesis.speak(u); }catch(e){}
+const TTS = "speechSynthesis" in window;
+let voices = [];
+function loadVoices(){ try{ voices = speechSynthesis.getVoices() || []; }catch(e){ voices=[]; } }
+if (TTS){ loadVoices(); try{ speechSynthesis.addEventListener("voiceschanged", loadVoices); }catch(e){} }
+function frVoice(){
+  return voices.find(v=>/^fr[-_]CH/i.test(v.lang))
+      || voices.find(v=>/^fr[-_]FR/i.test(v.lang) && v.localService)
+      || voices.find(v=>/^fr[-_]FR/i.test(v.lang))
+      || voices.find(v=>/^fr/i.test(v.lang));
+}
+function toast(html){
+  const t=$("toast"); t.innerHTML=html; t.hidden=false;
+  clearTimeout(toast._t); toast._t=setTimeout(()=>{ t.hidden=true; }, 9000);
+}
+const NO_VOICE = "🔊 Ce navigateur n’a pas de voix pour lire à haute voix. Ouvre le quiz dans <b>Chrome</b> ou <b>Edge</b> sur ordinateur, ou <b>Safari</b> sur iPhone, et vérifie que le son est allumé.";
+function speakText(t, toggle=true){
+  if (!TTS){ toast(NO_VOICE); return; }
+  try{
+    if (speechSynthesis.speaking || speechSynthesis.pending){
+      speechSynthesis.cancel();
+      if (toggle) return; // 2e clic sur 🔊 = stop
+    }
+    loadVoices();
+    const v = frVoice();
+    // phrase par phrase : évite que la lecture se coupe sur les longs textes
+    const parts = (t.match(/[^.!?;:]+[.!?;:]*/g) || [t]).map(s=>s.trim()).filter(Boolean);
+    let started = false;
+    parts.forEach(p=>{
+      const u = new SpeechSynthesisUtterance(p);
+      u.lang = v ? v.lang : "fr-FR"; if (v) u.voice = v; u.rate = 0.95;
+      u.onstart = ()=>{ started = true; };
+      speechSynthesis.speak(u);
+    });
+    setTimeout(()=>{ if (!started){ speechSynthesis.cancel(); toast(NO_VOICE); } }, 2500);
+  }catch(e){ toast(NO_VOICE); }
 }
 
 /* ---------- dictée vocale ---------- */
@@ -514,6 +559,7 @@ function micSupported(){ return !!SR; }
 function startMic(){
   const ta=$("oralText"), btn=$("micBtn");
   if (!SR) return;
+  try{ speechSynthesis.cancel(); }catch(e){}
   recWanted = true;
   baseText = ta.value.trim() ? ta.value.trim()+" " : "";
   finalText = "";
@@ -565,6 +611,11 @@ function renderHome(){
   $("chronoSeg").querySelectorAll("button").forEach(b=>{
     b.classList.toggle("sel", (b.dataset.v==="1")===prefs.chrono);
     b.onclick=()=>{ prefs.chrono=b.dataset.v==="1"; save(KEY_P,prefs); renderHome(); };
+  });
+  if (prefs.read===undefined) prefs.read=true;
+  $("readSeg").querySelectorAll("button").forEach(b=>{
+    b.classList.toggle("sel", (b.dataset.v==="1")===prefs.read);
+    b.onclick=()=>{ prefs.read=b.dataset.v==="1"; save(KEY_P,prefs); renderHome(); if (prefs.read) speakText("La lecture à voix haute est activée."); };
   });
 }
 
@@ -622,6 +673,7 @@ function renderQuestion(){
     <button class="speak" id="speakBtn">🔊 Écouter la question</button>`;
   $("speakBtn").onclick=()=>speakText(q.q);
   if (G.kind==="oral") renderOral(q); else renderQcm(q);
+  if (prefs.read && TTS) speakText(q.q, false);
 }
 
 /* ----- QCM ----- */
